@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>中国各省旅游收入可视化（2023-2025）</title>
+    <link rel="icon" href="data:,">
+    <script src="./assets_js/echarts.min.js"></script>
+    <script src="./assets_js/maps/china.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background:
+                radial-gradient(circle at top left, rgba(251, 191, 36, 0.22), transparent 28%),
+                radial-gradient(circle at top right, rgba(239, 68, 68, 0.16), transparent 22%),
+                linear-gradient(180deg, #fff8ef 0%, #fff3df 100%);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+        body {
+            padding: 14px 0 18px;
+        }
+        .page-shell {
+            width: 1260px;
+            margin: 0 auto;
+            position: relative;
+            border-radius: 28px;
+            background: rgba(255, 252, 247, 0.96);
+            box-shadow: 0 26px 70px rgba(194, 65, 12, 0.12);
+            border: 1px solid rgba(251, 146, 60, 0.16);
+            overflow: hidden;
+        }
+        .page-header {
+            padding: 26px 34px 0;
+            text-align: left;
+        }
+        .page-title {
+            margin: 0;
+            color: #7c2d12;
+            font-size: 26px;
+            line-height: 1.2;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            overflow: visible;
+        }
+        .content-row {
+            display: grid;
+            grid-template-columns: 840px 340px;
+            column-gap: 16px;
+            align-items: start;
+            padding: 6px 18px 18px 0;
+        }
+        .map-stage {
+            position: relative;
+            width: 840px;
+        }
+        .chart-container {
+            width: 820px;
+            height: 720px;
+        }
+        .map-hover-tooltip {
+            min-width: 132px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255, 252, 247, 0.96);
+            border: 1px solid rgba(251, 146, 60, 0.3);
+            box-shadow: 0 14px 32px rgba(124, 45, 18, 0.18);
+            color: #7c2d12;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.45;
+        }
+        .map-hover-name {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .map-hover-value {
+            color: #c2410c;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .year-label {
+            position: absolute;
+            top: 8px;
+            left: 410px;
+            transform: translateX(-50%);
+            color: #c2410c;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .side-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 58px;
+            height: 58px;
+            border: 1px solid rgba(154, 52, 18, 0.22);
+            border-radius: 999px;
+            background: rgba(255, 247, 237, 0.98);
+            color: #9a3412;
+            font-size: 32px;
+            font-weight: bold;
+            line-height: 54px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 14px 36px rgba(154, 52, 18, 0.16);
+            user-select: none;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+            backdrop-filter: blur(10px);
+            z-index: 20;
+        }
+        .side-nav:hover {
+            transform: translateY(-50%) scale(1.03);
+            background: #fff1dd;
+            box-shadow: 0 18px 40px rgba(154, 52, 18, 0.2);
+        }
+        .side-nav:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: translateY(-50%);
+            box-shadow: 0 10px 24px rgba(154, 52, 18, 0.08);
+        }
+        .side-nav.prev {
+            left: 10px;
+        }
+        .side-nav.next {
+            right: 10px;
+        }
+        .bottom-toolbar {
+            position: absolute;
+            left: 410px;
+            bottom: 18px;
+            transform: translateX(-50%);
+            width: 600px;
+            z-index: 20;
+        }
+        .year-track {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        .year-track::before {
+            content: "";
+            position: absolute;
+            left: 42px;
+            right: 42px;
+            top: 18px;
+            height: 3px;
+            background: #fdba74;
+            border-radius: 999px;
+        }
+        .year-item {
+            position: relative;
+            z-index: 1;
+            border: none;
+            background: transparent;
+            color: #9a3412;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 24px 8px 0;
+            min-width: 96px;
+            transition: transform 0.18s ease, color 0.18s ease;
+        }
+        .year-item::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 9px;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            background: #fb923c;
+            border: 2px solid #ea580c;
+            box-sizing: border-box;
+            transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+        }
+        .year-item:hover {
+            color: #7c2d12;
+        }
+        .year-item.active {
+            color: #7c2d12;
+            font-size: 16px;
+        }
+        .year-item.active::before {
+            background: #dc2626;
+            border-color: #b91c1c;
+            box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.18);
+            transform: translateX(-50%) scale(1.18);
+        }
+        .info-panel-wrap {
+            padding-top: 8px;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 14px;
+        }
+        .info-panel {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255, 252, 247, 0.97);
+            box-shadow: 0 18px 44px rgba(124, 45, 18, 0.16);
+            border: 1px solid rgba(251, 146, 60, 0.18);
+            backdrop-filter: blur(8px);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
+        }
+        .info-panel.image-missing .info-panel-image-placeholder {
+            display: flex;
+        }
+        .info-panel.image-missing .info-panel-image {
+            display: none;
+        }
+        .info-panel-image {
+            width: 100%;
+            height: 155px;
+            object-fit: cover;
+            display: block;
+            background: linear-gradient(135deg, #fde7c8 0%, #ffd6a5 100%);
+        }
+        .info-panel-image-placeholder {
+            display: none;
+            width: 100%;
+            height: 155px;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fde7c8 0%, #ffd6a5 100%);
+            color: #9a3412;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .info-panel-body {
+            padding: 14px 14px 12px;
+        }
+        .info-panel-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .info-panel-title {
+            color: #7c2d12;
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .info-panel-year {
+            color: #c2410c;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .info-panel-income {
+            margin-bottom: 8px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(254, 215, 170, 0.45), rgba(254, 242, 242, 0.82));
+            color: #9a3412;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .info-panel-grid {
+            display: grid;
+            gap: 8px;
+        }
+        .info-panel-row {
+            display: grid;
+            gap: 3px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(255, 247, 237, 0.9);
+            border: 1px solid rgba(251, 146, 60, 0.1);
+        }
+        .info-panel-label {
+            color: #c2410c;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+        .info-panel-value {
+            color: #7c2d12;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .rank-panel {
+            width: 100%;
+            border-radius: 20px;
+            background: rgba(255, 252, 247, 0.97);
+            box-shadow: 0 18px 44px rgba(124, 45, 18, 0.13);
+            border: 1px solid rgba(251, 146, 60, 0.18);
+            backdrop-filter: blur(8px);
+            overflow: hidden;
+        }
+        .rank-panel-head {
+            padding: 14px 16px 4px;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .rank-panel-title {
+            color: #7c2d12;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .rank-panel-year {
+            color: #c2410c;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .rank-chart {
+            width: 340px;
+            height: 285px;
+        }
+    </style>
+</head>
+    <body>
+    <div class="page-shell">
+        <div class="page-header">
+            <h1 class="page-title">中国各省旅游收入可视化（2023-2025）</h1>
+        </div>
+        <div class="content-row">
+            <div class="map-stage">
+                <div class="year-label" id="year-label">2023年</div>
+                <button class="side-nav prev" id="prev-btn">&#8249;</button>
+                <button class="side-nav next" id="next-btn">&#8250;</button>
+                <div id="chart-container" class="chart-container"></div>
+                <div class="bottom-toolbar">
+                    <div class="year-track" id="year-track">
+                        <button class="year-item active" data-index="0">2023</button><button class="year-item" data-index="1">2024</button><button class="year-item" data-index="2">2025</button>
+                    </div>
+                </div>
+            </div>
+            <div class="info-panel-wrap">
+                <div class="info-panel image-missing" id="info-panel">
+                    <img class="info-panel-image" id="info-panel-image" src="" alt="省份图片" />
+                    <div class="info-panel-image-placeholder" id="info-panel-placeholder">悬停省份查看详细旅游信息</div>
+                    <div class="info-panel-body">
+                        <div class="info-panel-head">
+                            <div class="info-panel-title" id="info-panel-title">旅游信息卡片</div>
+                            <div class="info-panel-year" id="info-panel-year">2023年</div>
+                        </div>
+                        <div class="info-panel-income" id="info-panel-income">请将鼠标移动到地图省份上</div>
+                        <div class="info-panel-grid">
+                            <div class="info-panel-row">
+                                <div class="info-panel-label">强旅游城市</div>
+                                <div class="info-panel-value" id="info-panel-cities">这里会显示对应省份的热门城市</div>
+                            </div>
+                            <div class="info-panel-row">
+                                <div class="info-panel-label">热门景点</div>
+                                <div class="info-panel-value" id="info-panel-scenic">这里会显示对应省份的代表景点</div>
+                            </div>
+                            <div class="info-panel-row">
+                                <div class="info-panel-label">特色美食</div>
+                                <div class="info-panel-value" id="info-panel-food">这里会显示对应省份的特色美食</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rank-panel">
+                    <div class="rank-panel-head">
+                        <div class="rank-panel-title">当前年份旅游收入 Top10</div>
+                        <div class="rank-panel-year" id="rank-panel-year">2023年</div>
+                    </div>
+                    <div id="rank-chart" class="rank-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const frames = [{"year": "2023", "min": 530.0, "max": 14600.0, "data": [["北京市", 5850], ["天津市", 2500], ["河北省", 10000], ["山西省", 6500], ["内蒙古自治区", 3600], ["辽宁省", 5300], ["吉林省", 5800], ["黑龙江省", 3200], ["上海市", 4500], ["江苏省", 12000], ["浙江省", 9800], ["安徽省", 7500], ["福建省", 6981], ["江西省", 9668], ["山东省", 9100], ["河南省", 9000], ["湖北省", 7000], ["湖南省", 9565], ["广东省", 9400], ["广西壮族自治区", 8600], ["海南省", 1384], ["重庆市", 5000], ["四川省", 12800], ["贵州省", 14600], ["云南省", 14400], ["西藏自治区", 650], ["陕西省", 7730], ["甘肃省", 2746], ["青海省", 550], ["宁夏回族自治区", 530], ["新疆维吾尔自治区", 2200]]}, {"year": "2024", "min": 610.0, "max": 17600.0, "data": [["北京市", 6500], ["天津市", 2850], ["河北省", 11100], ["山西省", 7100], ["内蒙古自治区", 4000], ["辽宁省", 6325], ["吉林省", 6600], ["黑龙江省", 3800], ["上海市", 4800], ["江苏省", 13400], ["浙江省", 12400], ["安徽省", 9426], ["福建省", 9200], ["江西省", 10200], ["山东省", 10000], ["河南省", 10100], ["湖北省", 7800], ["湖南省", 10600], ["广东省", 11000], ["广西壮族自治区", 10300], ["海南省", 1800], ["重庆市", 5800], ["四川省", 17600], ["贵州省", 16500], ["云南省", 11400], ["西藏自治区", 720], ["陕西省", 8500], ["甘肃省", 3300], ["青海省", 620], ["宁夏回族自治区", 610], ["新疆维吾尔自治区", 2900]]}, {"year": "2025", "min": 680.0, "max": 18000.0, "data": [["北京市", 7200.0], ["天津市", 3200.0], ["河北省", 10200.0], ["山西省", 7800.0], ["内蒙古自治区", 4500.0], ["辽宁省", 6958.0], ["吉林省", 7304.0], ["黑龙江省", 4300.0], ["上海市", 5200.0], ["江苏省", 14800.0], ["浙江省", 12179.5], ["安徽省", 9800.0], ["福建省", 10000.0], ["江西省", 10500.0], ["山东省", 10800.0], ["河南省", 10500.0], ["湖北省", 8500.0], ["湖南省", 11576.0], ["广东省", 11800.0], ["广西壮族自治区", 11500.0], ["海南省", 2254.0], ["重庆市", 6500.0], ["四川省", 18000.0], ["贵州省", 10800.0], ["云南省", 12700.0], ["西藏自治区", 816.81], ["陕西省", 9200.0], ["甘肃省", 4036.0], ["青海省", 680.0], ["宁夏回族自治区", 710.0], ["新疆维吾尔自治区", 3700.89]]}];
+        const provinceInfo = {"北京市": {"cities": "北京、延庆、怀柔", "scenic": "故宫博物院、八达岭长城、颐和园", "food": "北京烤鸭、涮羊肉、炸酱面", "image": "./assets/beijing.jpg"}, "天津市": {"cities": "天津、蓟州、滨海新区", "scenic": "天津之眼、古文化街、盘山风景区", "food": "狗不理包子、十八街麻花、耳朵眼炸糕", "image": "./assets/tianjin.jpg"}, "河北省": {"cities": "承德、秦皇岛、保定", "scenic": "承德避暑山庄、北戴河、山海关", "food": "驴肉火烧、缸炉烧饼、白洋淀炖杂鱼", "image": "./assets/hebei.jpg"}, "山西省": {"cities": "太原、大同、晋中", "scenic": "五台山、平遥古城、云冈石窟", "food": "刀削面、平遥牛肉、山西老陈醋", "image": "./assets/shanxi.jpg"}, "内蒙古自治区": {"cities": "呼和浩特、呼伦贝尔、鄂尔多斯", "scenic": "呼伦贝尔大草原、响沙湾、阿尔山国家森林公园", "food": "手把肉、烤全羊、奶茶", "image": "./assets/neimenggu.jpg"}, "辽宁省": {"cities": "沈阳、大连、鞍山", "scenic": "沈阳故宫、大连老虎滩海洋公园、千山风景区", "food": "锅包肉、老边饺子、大连海鲜", "image": "./assets/liaoning.jpg"}, "吉林省": {"cities": "长春、吉林、延边", "scenic": "长白山、伪满皇宫博物院、净月潭", "food": "锅包肉、长春酱肉、延边冷面", "image": "./assets/jilin.jpg"}, "黑龙江省": {"cities": "哈尔滨、牡丹江、黑河", "scenic": "哈尔滨冰雪大世界、五大连池、镜泊湖", "food": "锅包肉、红肠、杀猪菜", "image": "./assets/heilongjiang.jpg"}, "上海市": {"cities": "上海、崇明、松江", "scenic": "外滩、迪士尼乐园、豫园", "food": "小笼包、生煎包、本帮红烧肉", "image": "./assets/shanghai.jpg"}, "江苏省": {"cities": "南京、苏州、无锡", "scenic": "苏州园林、南京夫子庙、无锡灵山大佛", "food": "盐水鸭、松鼠桂鱼、蟹黄汤包", "image": "./assets/suzhou.jpg"}, "浙江省": {"cities": "杭州、宁波、温州", "scenic": "杭州西湖、乌镇、普陀山", "food": "东坡肉、西湖醋鱼、宁波汤圆", "image": "./assets/zhejiang.jpg"}, "安徽省": {"cities": "黄山、合肥、安庆", "scenic": "黄山、宏村、九华山", "food": "臭鳜鱼、毛豆腐、黄山烧饼", "image": "./assets/anhui.jpg"}, "福建省": {"cities": "厦门、福州、泉州", "scenic": "鼓浪屿、武夷山、福建土楼", "food": "佛跳墙、沙县小吃、姜母鸭", "image": "./assets/fujian.jpg"}, "江西省": {"cities": "南昌、九江、上饶", "scenic": "庐山、井冈山、婺源", "food": "瓦罐汤、炒粉、三杯鸡", "image": "./assets/jiangxi.jpg"}, "山东省": {"cities": "济南、青岛、泰安", "scenic": "泰山、曲阜三孔、青岛崂山", "food": "煎饼卷大葱、德州扒鸡、青岛海鲜", "image": "./assets/shandong.jpg"}, "河南省": {"cities": "郑州、洛阳、开封", "scenic": "少林寺、龙门石窟、清明上河园", "food": "胡辣汤、烩面、开封灌汤包", "image": "./assets/henan.jpg"}, "湖北省": {"cities": "武汉、宜昌、十堰", "scenic": "黄鹤楼、武当山、三峡大坝", "food": "热干面、武昌鱼、排骨藕汤", "image": "./assets/hubei.jpg"}, "湖南省": {"cities": "长沙、张家界、湘西", "scenic": "张家界、凤凰古城、岳阳楼", "food": "剁椒鱼头、长沙臭豆腐、口味虾", "image": "./assets/hunan.jpg"}, "广东省": {"cities": "广州、深圳、珠海", "scenic": "广州塔、长隆旅游度假区、丹霞山", "food": "早茶点心、白切鸡、煲仔饭", "image": "./assets/guangdong.jpg"}, "广西壮族自治区": {"cities": "桂林、南宁、北海", "scenic": "桂林山水、阳朔西街、德天瀑布", "food": "螺蛳粉、桂林米粉、老友粉", "image": "./assets/guangxi.jpg"}, "海南省": {"cities": "三亚、海口、琼海", "scenic": "三亚亚龙湾、蜈支洲岛、海口骑楼老街", "food": "海南鸡饭、清补凉、和乐蟹", "image": "./assets/hainan.jpg"}, "重庆市": {"cities": "重庆、万州、涪陵", "scenic": "洪崖洞、大足石刻、长江三峡", "food": "重庆火锅、小面、酸辣粉", "image": "./assets/chongqing.jpg"}, "四川省": {"cities": "成都、阿坝、乐山", "scenic": "九寨沟、成都大熊猫繁育研究基地、峨眉山", "food": "四川火锅、麻婆豆腐、回锅肉", "image": "./assets/sichuan.jpg"}, "贵州省": {"cities": "贵阳、安顺、黔东南", "scenic": "黄果树瀑布、西江千户苗寨、梵净山", "food": "酸汤鱼、丝娃娃、肠旺面", "image": "./assets/guizhou.jpg"}, "云南省": {"cities": "昆明、丽江、大理", "scenic": "丽江古城、玉龙雪山、西双版纳热带植物园", "food": "过桥米线、鲜花饼、宣威火腿", "image": "./assets/yunnan.jpg"}, "西藏自治区": {"cities": "拉萨、林芝、日喀则", "scenic": "布达拉宫、纳木错、林芝桃花沟", "food": "酥油茶、青稞酒、藏面", "image": "./assets/xizang.jpg"}, "陕西省": {"cities": "西安、延安、渭南", "scenic": "兵马俑、西安城墙、华山", "food": "肉夹馍、凉皮、羊肉泡馍", "image": "./assets/shaanxi.jpg"}, "甘肃省": {"cities": "兰州、敦煌、张掖", "scenic": "莫高窟、嘉峪关、张掖丹霞地貌", "food": "兰州拉面、手抓羊肉、灰豆子", "image": "./assets/gansu.jpg"}, "青海省": {"cities": "西宁、海东、海南", "scenic": "青海湖、茶卡盐湖、塔尔寺", "food": "手抓羊肉、青海老酸奶、酿皮", "image": "./assets/qinghai.jpg"}, "宁夏回族自治区": {"cities": "银川、中卫、吴忠", "scenic": "镇北堡西部影城、沙坡头、贺兰山岩画", "food": "手抓羊肉、羊杂碎、蒿子面", "image": "./assets/ningxia.jpg"}, "新疆维吾尔自治区": {"cities": "乌鲁木齐、伊犁、吐鲁番", "scenic": "天山天池、喀纳斯湖、吐鲁番葡萄沟", "food": "大盘鸡、烤包子、手抓饭", "image": "./assets/xinjiang.jpg"}};
+        const mapChart = echarts.init(document.getElementById("chart-container"), "white", { renderer: "canvas", locale: "ZH" });
+        const barChart = echarts.init(document.getElementById("rank-chart"), "white", { renderer: "canvas", locale: "ZH" });
+        const baseMapOption = {
+    "backgroundColor": "rgba(255, 252, 247, 0.96)",
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 900,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 1400,
+    "animationEasingUpdate": "cubicInOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "map",
+            "name": "2023\u5e74\u65c5\u6e38\u6536\u5165",
+            "label": {
+                "show": false,
+                "margin": 8,
+                "richInheritPlainLabel": true,
+                "valueAnimation": false
+            },
+            "map": "china",
+            "data": [
+                {
+                    "name": "\u5317\u4eac\u5e02",
+                    "value": 5850
+                },
+                {
+                    "name": "\u5929\u6d25\u5e02",
+                    "value": 2500
+                },
+                {
+                    "name": "\u6cb3\u5317\u7701",
+                    "value": 10000
+                },
+                {
+                    "name": "\u5c71\u897f\u7701",
+                    "value": 6500
+                },
+                {
+                    "name": "\u5185\u8499\u53e4\u81ea\u6cbb\u533a",
+                    "value": 3600
+                },
+                {
+                    "name": "\u8fbd\u5b81\u7701",
+                    "value": 5300
+                },
+                {
+                    "name": "\u5409\u6797\u7701",
+                    "value": 5800
+                },
+                {
+                    "name": "\u9ed1\u9f99\u6c5f\u7701",
+                    "value": 3200
+                },
+                {
+                    "name": "\u4e0a\u6d77\u5e02",
+                    "value": 4500
+                },
+                {
+                    "name": "\u6c5f\u82cf\u7701",
+                    "value": 12000
+                },
+                {
+                    "name": "\u6d59\u6c5f\u7701",
+                    "value": 9800
+                },
+                {
+                    "name": "\u5b89\u5fbd\u7701",
+                    "value": 7500
+                },
+                {
+                    "name": "\u798f\u5efa\u7701",
+                    "value": 6981
+                },
+                {
+                    "name": "\u6c5f\u897f\u7701",
+                    "value": 9668
+                },
+                {
+                    "name": "\u5c71\u4e1c\u7701",
+                    "value": 9100
+                },
+                {
+                    "name": "\u6cb3\u5357\u7701",
+                    "value": 9000
+                },
+                {
+                    "name": "\u6e56\u5317\u7701",
+                    "value": 7000
+                },
+                {
+                    "name": "\u6e56\u5357\u7701",
+                    "value": 9565
+                },
+                {
+                    "name": "\u5e7f\u4e1c\u7701",
+                    "value": 9400
+                },
+                {
+                    "name": "\u5e7f\u897f\u58ee\u65cf\u81ea\u6cbb\u533a",
+                    "value": 8600
+                },
+                {
+                    "name": "\u6d77\u5357\u7701",
+                    "value": 1384
+                },
+                {
+                    "name": "\u91cd\u5e86\u5e02",
+                    "value": 5000
+                },
+                {
+                    "name": "\u56db\u5ddd\u7701",
+                    "value": 12800
+                },
+                {
+                    "name": "\u8d35\u5dde\u7701",
+                    "value": 14600
+                },
+                {
+                    "name": "\u4e91\u5357\u7701",
+                    "value": 14400
+                },
+                {
+                    "name": "\u897f\u85cf\u81ea\u6cbb\u533a",
+                    "value": 650
+                },
+                {
+                    "name": "\u9655\u897f\u7701",
+                    "value": 7730
+                },
+                {
+                    "name": "\u7518\u8083\u7701",
+                    "value": 2746
+                },
+                {
+                    "name": "\u9752\u6d77\u7701",
+                    "value": 550
+                },
+                {
+                    "name": "\u5b81\u590f\u56de\u65cf\u81ea\u6cbb\u533a",
+                    "value": 530
+                },
+                {
+                    "name": "\u65b0\u7586\u7ef4\u543e\u5c14\u81ea\u6cbb\u533a",
+                    "value": 2200
+                }
+            ],
+            "roam": true,
+            "aspectScale": 0.75,
+            "nameProperty": "name",
+            "selectedMode": false,
+            "zoom": 1,
+            "zlevel": 0,
+            "z": 2,
+            "seriesLayoutBy": "column",
+            "datasetIndex": 0,
+            "mapValueCalculation": "sum",
+            "showLegendSymbol": false,
+            "preserveAspect": false,
+            "clip": false,
+            "emphasis": {},
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "2023\u5e74\u65c5\u6e38\u6536\u5165"
+            ],
+            "selected": {},
+            "show": false,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10,
+            "triggerEvent": false
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "item",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "line"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "displayTransition": true,
+        "formatter": function (params) { return window.__tourismTooltipFormatter ? window.__tourismTooltipFormatter(params) : ''; },
+        "textStyle": {
+            "fontSize": 14,
+            "richInheritPlainLabel": true
+        },
+        "backgroundColor": "rgba(255,255,255,0)",
+        "borderWidth": 0,
+        "padding": 0,
+        "order": "seriesAsc"
+    },
+    "title": [
+        {
+            "show": false,
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "visualMap": {
+        "show": true,
+        "type": "continuous",
+        "min": 530.0,
+        "max": 14600.0,
+        "text": [
+            "\u9ad8",
+            "\u4f4e"
+        ],
+        "textStyle": {
+            "color": "#7c2d12",
+            "fontWeight": "bold",
+            "fontSize": 14,
+            "richInheritPlainLabel": true
+        },
+        "inRange": {
+            "color": [
+                "#fff5eb",
+                "#fdcc8a",
+                "#fc8d59",
+                "#e34a33",
+                "#b30000"
+            ]
+        },
+        "calculable": true,
+        "inverse": false,
+        "splitNumber": 5,
+        "hoverLink": true,
+        "orient": "vertical",
+        "left": "2%",
+        "bottom": "12%",
+        "padding": 5,
+        "showLabel": true,
+        "itemWidth": 20,
+        "itemHeight": 140,
+        "borderWidth": 0
+    }
+};
+        const baseBarOption = {
+    "backgroundColor": "rgba(255, 252, 247, 0)",
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 900,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 1400,
+    "animationEasingUpdate": "cubicInOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "bar",
+            "name": "\u65c5\u6e38\u6536\u5165",
+            "legendHoverLink": true,
+            "data": [
+                14600,
+                14400,
+                12800,
+                12000,
+                10000,
+                9800,
+                9668,
+                9565,
+                9400,
+                9100
+            ],
+            "realtimeSort": false,
+            "showBackground": false,
+            "stackStrategy": "samesign",
+            "cursor": "pointer",
+            "barMinHeight": 0,
+            "barCategoryGap": "36%",
+            "barGap": "30%",
+            "large": false,
+            "largeThreshold": 400,
+            "seriesLayoutBy": "column",
+            "datasetIndex": 0,
+            "clip": true,
+            "zlevel": 0,
+            "z": 2,
+            "label": {
+                "show": true,
+                "position": "right",
+                "color": "#7c2d12",
+                "margin": 8,
+                "fontSize": 11,
+                "fontWeight": "bold",
+                "formatter": "{c} \u4ebf\u5143",
+                "richInheritPlainLabel": true,
+                "valueAnimation": false
+            },
+            "itemStyle": {
+                "color": new echarts.graphic.LinearGradient(0, 0, 1, 0, [                        {offset: 0, color: '#fdba74'},                        {offset: 0.55, color: '#fb923c'},                        {offset: 1, color: '#dc2626'}                    ])
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "\u65c5\u6e38\u6536\u5165"
+            ],
+            "selected": {},
+            "show": false,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10,
+            "triggerEvent": false
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "axis",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "shadow"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "displayTransition": true,
+        "formatter": "{b}<br/>\u65c5\u6e38\u6536\u5165\uff1a{c} \u4ebf\u5143",
+        "textStyle": {
+            "color": "#7c2d12",
+            "richInheritPlainLabel": true
+        },
+        "backgroundColor": "rgba(255, 252, 247, 0.96)",
+        "borderColor": "rgba(251, 146, 60, 0.35)",
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "type": "value",
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "nameTruncate": {},
+            "nameMoveOverlap": true,
+            "axisLine": {
+                "show": true,
+                "onZero": true,
+                "onZeroAxisIndex": 0,
+                "lineStyle": {
+                    "show": false,
+                    "color": "rgba(154, 52, 18, 0.22)"
+                }
+            },
+            "axisLabel": {
+                "show": true,
+                "color": "#9a3412",
+                "margin": 8,
+                "fontSize": 10,
+                "richInheritPlainLabel": true,
+                "valueAnimation": false
+            },
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "silent": false,
+            "triggerEvent": false,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": false,
+                    "color": "rgba(251, 146, 60, 0.16)"
+                }
+            },
+            "animation": true,
+            "animationThreshold": 2000,
+            "animationDuration": 1000,
+            "animationEasing": "cubicOut",
+            "animationDelay": 0,
+            "animationDurationUpdate": 300,
+            "animationEasingUpdate": "cubicOut",
+            "animationDelayUpdate": 0
+        }
+    ],
+    "yAxis": [
+        {
+            "type": "category",
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "nameTruncate": {},
+            "nameMoveOverlap": true,
+            "axisLine": {
+                "show": false,
+                "onZero": true,
+                "onZeroAxisIndex": 0
+            },
+            "axisTick": {
+                "show": false,
+                "alignWithLabel": false,
+                "inside": false
+            },
+            "axisLabel": {
+                "show": true,
+                "color": "#7c2d12",
+                "margin": 8,
+                "fontSize": 11,
+                "fontWeight": "bold",
+                "richInheritPlainLabel": true,
+                "valueAnimation": false
+            },
+            "inverse": true,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "silent": false,
+            "triggerEvent": false,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": false
+                }
+            },
+            "animation": true,
+            "animationThreshold": 2000,
+            "animationDuration": 1000,
+            "animationEasing": "cubicOut",
+            "animationDelay": 0,
+            "animationDurationUpdate": 300,
+            "animationEasingUpdate": "cubicOut",
+            "animationDelayUpdate": 0,
+            "data": [
+                "\u8d35\u5dde\u7701",
+                "\u4e91\u5357\u7701",
+                "\u56db\u5ddd\u7701",
+                "\u6c5f\u82cf\u7701",
+                "\u6cb3\u5317\u7701",
+                "\u6d59\u6c5f\u7701",
+                "\u6c5f\u897f\u7701",
+                "\u6e56\u5357\u7701",
+                "\u5e7f\u4e1c\u7701",
+                "\u5c71\u4e1c\u7701"
+            ]
+        }
+    ],
+    "title": [
+        {
+            "show": false,
+            "target": "blank",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ]
+};
+        const yearLabel = document.getElementById("year-label");
+        const rankPanelYear = document.getElementById("rank-panel-year");
+        const prevBtn = document.getElementById("prev-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const yearItems = Array.from(document.querySelectorAll(".year-item"));
+        const infoPanel = document.getElementById("info-panel");
+        const panelTitle = document.getElementById("info-panel-title");
+        const panelYear = document.getElementById("info-panel-year");
+        const panelIncome = document.getElementById("info-panel-income");
+        const panelCities = document.getElementById("info-panel-cities");
+        const panelScenic = document.getElementById("info-panel-scenic");
+        const panelFood = document.getElementById("info-panel-food");
+        const panelImage = document.getElementById("info-panel-image");
+        const panelPlaceholder = document.getElementById("info-panel-placeholder");
+        let currentIndex = 0;
+        let animationToken = 0;
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function buildSeriesData(frame) {
+            return frame.data.map(([name, value]) => ({ name, value }));
+        }
+
+        function buildTop10(frame) {
+            return frame.data
+                .slice()
+                .sort((left, right) => right[1] - left[1])
+                .slice(0, 10);
+        }
+
+        function syncControls() {
+            yearLabel.textContent = frames[currentIndex].year + "年";
+            rankPanelYear.textContent = frames[currentIndex].year + "年";
+            yearItems.forEach((item, index) => item.classList.toggle("active", index === currentIndex));
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === frames.length - 1;
+        }
+
+        function setMapFrame(frame) {
+            mapChart.setOption({
+                visualMap: {
+                    min: frame.min,
+                    max: frame.max
+                },
+                series: [{
+                    name: frame.year + "年旅游收入",
+                    data: buildSeriesData(frame)
+                }]
+            });
+        }
+
+        function setBarFrame(frame) {
+            const top10 = buildTop10(frame);
+            barChart.setOption({
+                yAxis: {
+                    data: top10.map(([name]) => name),
+                    inverse: true
+                },
+                series: [{
+                    name: frame.year + "年旅游收入 Top10",
+                    data: top10.map(([, value]) => Number(value.toFixed(2)))
+                }]
+            });
+        }
+
+        function setFrame(frame) {
+            setMapFrame(frame);
+            setBarFrame(frame);
+        }
+
+        function updateInfoPanel(provinceName, value) {
+            const frame = frames[currentIndex];
+            const info = provinceInfo[provinceName] || {};
+            const displayValue = value === undefined || value === null || value === "-" ? "暂无数据" : value + " 亿元";
+
+            panelTitle.textContent = provinceName || "旅游信息卡片";
+            panelYear.textContent = frame.year + "年";
+            panelIncome.textContent = "旅游收入： " + displayValue;
+            panelCities.textContent = info.cities || "暂无信息";
+            panelScenic.textContent = info.scenic || "暂无信息";
+            panelFood.textContent = info.food || "暂无信息";
+
+            if (info.image) {
+                panelImage.src = info.image;
+                panelImage.alt = provinceName;
+                infoPanel.classList.remove("image-missing");
+            } else {
+                panelImage.removeAttribute("src");
+                panelImage.alt = "暂无省份图片";
+                infoPanel.classList.add("image-missing");
+            }
+
+            infoPanel.style.transform = "translateY(-2px)";
+            setTimeout(() => {
+                infoPanel.style.transform = "translateY(0)";
+            }, 120);
+        }
+
+        function animateToIndex(nextIndex) {
+            if (nextIndex < 0 || nextIndex >= frames.length || nextIndex === currentIndex) {
+                return;
+            }
+
+            const fromFrame = frames[currentIndex];
+            const toFrame = frames[nextIndex];
+            const toMap = new Map(toFrame.data);
+            const duration = 1400;
+            const token = ++animationToken;
+            const start = performance.now();
+
+            currentIndex = nextIndex;
+            syncControls();
+
+            const step = (now) => {
+                if (token !== animationToken) {
+                    return;
+                }
+
+                const t = Math.min((now - start) / duration, 1);
+                const eased = t < 0.5
+                    ? 4 * t * t * t
+                    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+                const interpolatedFrame = {
+                    year: toFrame.year,
+                    min: fromFrame.min + (toFrame.min - fromFrame.min) * eased,
+                    max: fromFrame.max + (toFrame.max - fromFrame.max) * eased,
+                    data: fromFrame.data.map(([name, startValue]) => {
+                        const endValue = toMap.get(name);
+                        const value = startValue + (endValue - startValue) * eased;
+                        return [name, Number(value.toFixed(2))];
+                    })
+                };
+
+                setFrame(interpolatedFrame);
+
+                if (t < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    setFrame(toFrame);
+                }
+            };
+
+            requestAnimationFrame(step);
+        }
+
+        window.__tourismTooltipFormatter = function (params) {
+            updateInfoPanel(params.name, params.value);
+            const value = params.value === undefined || params.value === null || params.value === "-"
+                ? "暂无数据"
+                : params.value + " 亿元";
+            return `
+                <div class="map-hover-tooltip">
+                    <div class="map-hover-name">${escapeHtml(params.name)}</div>
+                    <div class="map-hover-value">旅游收入：${escapeHtml(value)}</div>
+                </div>
+            `;
+        };
+
+        baseMapOption.series[0].name = frames[0].year + "年旅游收入";
+        baseMapOption.series[0].data = buildSeriesData(frames[0]);
+        baseMapOption.series[0].label = {
+            show: false,
+            color: "#7c2d12",
+            fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
+            fontSize: 12,
+            fontWeight: "bold"
+        };
+        baseMapOption.series[0].emphasis = {
+            label: {
+                show: true,
+                color: "#7c2d12",
+                fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
+                fontSize: 15,
+                fontWeight: "bold",
+                textBorderColor: "rgba(255, 252, 247, 0.95)",
+                textBorderWidth: 4,
+                textShadowColor: "rgba(124, 45, 18, 0.18)",
+                textShadowBlur: 8
+            },
+            itemStyle: {
+                areaColor: "#fb923c",
+                borderColor: "#9a3412",
+                borderWidth: 1.2,
+                shadowColor: "rgba(124, 45, 18, 0.28)",
+                shadowBlur: 14
+            }
+        };
+        baseMapOption.visualMap.min = frames[0].min;
+        baseMapOption.visualMap.max = frames[0].max;
+        mapChart.setOption(baseMapOption);
+
+        baseBarOption.yAxis[0].inverse = true;
+        baseBarOption.grid = {
+            left: "30%",
+            right: "18%",
+            top: "8%",
+            bottom: "8%"
+        };
+        barChart.setOption(baseBarOption);
+        setBarFrame(frames[0]);
+        syncControls();
+
+        if (frames[0] && frames[0].data.length) {
+            const [provinceName, value] = frames[0].data[0];
+            updateInfoPanel(provinceName, value);
+        }
+
+        prevBtn.addEventListener("click", () => animateToIndex(currentIndex - 1));
+        nextBtn.addEventListener("click", () => animateToIndex(currentIndex + 1));
+        yearItems.forEach((item, index) => {
+            item.addEventListener("click", () => animateToIndex(index));
+        });
+        window.addEventListener("resize", () => {
+            mapChart.resize();
+            barChart.resize();
+        });
+    </script>
+</body>
+</html>
