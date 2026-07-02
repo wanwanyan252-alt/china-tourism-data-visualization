@@ -9,6 +9,7 @@ china_tourism_income_2023_2025.html
 ```
 
 打开后可以通过年份按钮、左右切换按钮、地图悬停和 Top10 排行图查看不同年份各省旅游收入及配套旅游信息。
+<img width="2515" height="1520" alt="image" src="https://github.com/user-attachments/assets/37270506-569b-4280-8b80-654bf449e581" />
 
 ## 项目结构
 
